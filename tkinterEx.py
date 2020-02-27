@@ -11,7 +11,7 @@ def calculate(*args):
 root = Tk()
 root.title("Feet to Meters")
 
-root.peepeepoopoo; 
+#root.peepeepoopoo; thanks sam
 
 mainframe = ttk.Frame(root, padding="3 3 12 12")
 mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
