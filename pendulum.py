@@ -63,7 +63,13 @@ class Vector2:
         return Vector2(self.x+nv.x,self.y+nv.y)
     
     def __mul__(self, nv):
-        return Vector2(self.x*nv.x,self.y*nv.y)
+        if type(nv) == int:
+            return Vector2(self.x*nv, self.y*nv)
+        else:
+            return Vector2(self.x*nv.x,self.y*nv.y)
+    
+    def __sub__(self, nv):
+        return Vector2(self.x-nv.x,self.y-nv.y)
 
 class PhysicsObject:
     maxVel = 300.0
@@ -117,12 +123,26 @@ class Box(PhysicsObject):
         self.size = size
         self.x1 = x+size
         self.y1 = y+size
+        self.center = Vector2(x+(size/2),y+(size/2))
         self.id = phyObCount
         phyObCount+=1
         self.cr = canvas.create_rectangle(x,y,self.x1,self.y1, fill= rectColor, activefill = activeRectColor)
 
     def updateDisplay(self):
         self.canvas.coords(self.cr,self.pos.x,self.pos.y, self.pos.x+self.size, self.pos.y+self.size)
+
+class POConnector:
+    def __init__(self,o,o1,canvas):
+        self.c1 = o.center
+        self.o = o
+        self.c2 = o1.center
+        self.o1 = o1
+        self.canvas = canvas
+        self.v = c2-c1
+        self.cr = canvas.create_line(self.c1.x,self.c1.y,self.c2.x,self.c2.y)
+
+    def updateDisplay(self):
+        self.canvas.coords(self.cr,self.c1.x,self.c1.y,self.c2.x,self.c2.y)
 
 root = Tk()
 root.title("Canvas Testing")
@@ -218,6 +238,7 @@ root.update()
 root.update_idletasks()
 canvasCenter = [canv.winfo_width()/2, canv.winfo_height()/2]
 poList.append(Box(canvasCenter[0]-15, canvasCenter[1]-15, 30, canv))
+poList.append(Box(360,400,30,canv))
 poLabel.place(x = 2, y = canv.winfo_height() - 10, anchor=SW)
 
 while loopV:
