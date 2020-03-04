@@ -11,74 +11,118 @@ class clickEvent:
         self.y = y
         self.time = time
 
+class Vector2:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.Conf()
+    
+    def Conf(self) :
+        self.list = [self.x, self.y]
+        self.unit = self.makeUnit(self.list)
+        self.mag = self.returnMagnitude(self.list)
+
+    def makeUnit(self, listin):
+        m = self.returnMagnitude(listin)
+        if m == 0:
+            return [0,0]
+        return [listin[0]/m, listin[1]/m]
+
+    def returnMagnitude(self, listin):
+        return math.sqrt(self.sqr(listin[0])+self.sqr(listin[1]))
+
+    def sqr(self, x):
+        return math.pow(x, 2)
+
+    def add(self, v):
+        self.x += v.x
+        self.y += v.y
+        self.Conf()
+
+    def returnAdd(self, v):
+        return Vector2(self.x+v.x, self.y+v.y)
+
+    def mult(self, v):
+        self.x *= v.x
+        self.y *= v.y
+        self.Conf()
+
+    def returnMult(self, v):
+        return Vector2(self.x*v.x, self.y*v.y)
+    
+    def returnPerp(self, reversedDir = "y"):
+        if reversedDir == "y":
+            return Vector2(-self.y, self.x)
+        if reversedDir == "x":
+            return Vector2(self.y, -self.x)
+    
+    def returnRev(self):
+        return Vector2(-self.x, -self.y)
+    
+    def __add__(self, nv):
+        return Vector2(self.x+nv.x,self.y+nv.y)
+    
+    def __mul__(self, nv):
+        return Vector2(self.x*nv.x,self.y*nv.y)
+
 class PhysicsObject:
     maxVel = 300.0
 
     def __init__(self, x = 10, y = 10, m = 1, p = False, velx = 0.0, vely = 0.0):
         global phyObCount
-        self.x = x
-        self.y = y
+        self.pos = Vector2(x,y)
         self.m = m
-        self.velx = velx
-        self.vely = vely
-        self.accx = 0.0
-        self.accy = .5
+        self.vel = Vector2(velx,vely)
+        self.acc = Vector2(0,9)
         self.p = p
         self.id = phyObCount
         phyObCount+=1
 
     def applyVel(self, t):
-        self.x += self.velx*t
-        self.y += self.vely*t
+        if self.p:
+            return
+        self.pos += self.vel * Vector2(t,t)
         global looping
         global canv
         if looping:
-            if self.x > canv.winfo_width():
-                self.x -= canv.winfo_width()
-            if self.x < 0:
-                self.x += canv.winfo_width()
-            if self.y > canv.winfo_height():
-                self.y -= canv.winfo_height()
-            if self.y < 0:
-                self.y += canv.winfo_height()
+            if self.pos.x > canv.winfo_width():
+                self.pos.x -= canv.winfo_width()
+            if self.pos.x < 0:
+                self.pos.x += canv.winfo_width()
+            if self.pos.y > canv.winfo_height():
+                self.pos.y -= canv.winfo_height()
+            if self.pos.y < 0:
+                self.pos.y += canv.winfo_height()
 
     def applyAcc(self, t):
-        self.velx += self.accx*t
-        if self.velx > self.maxVel:
-            self.velx = self.maxVel
-        if self.velx < -self.maxVel:
-            self.velx = -self.maxVel
-        self.vely += self.accy*t
-        if self.vely > self.maxVel:
-            self.vely = self.maxVel
-        if self.vely < -self.maxVel:
-            self.vely = -self.maxVel
+        self.vel.x += self.acc.x*t
+        if self.vel.x > self.maxVel:
+            self.vel.x = self.maxVel
+        if self.vel.x < -self.maxVel:
+            self.vel.x = -self.maxVel
+        self.vel.y += self.acc.y*t
+        if self.vel.y > self.maxVel:
+            self.vel.y = self.maxVel
+        if self.vel.y < -self.maxVel:
+            self.vel.y = -self.maxVel
     
     def __str__(self):
-        return "Physics object id {5} at {0}, {1} with mass {2}, and vel {3}, {4}".format(self.x, self.y, self.m, self.velx, self.vely, self.id)
+        return "Physics object id {5} at {0}, {1} with mass {2}, and vel {3}, {4}".format(round(self.pos.x,1), round(self.pos.y,1), self.m, round(self.vel.x,1), round(self.vel.y,1), self.id)
 
 class Box(PhysicsObject):
     def __init__(self, x, y, size, canvas, m = 1, p = False, velx = 0.0, vely = 0.0):
         global phyObCount
         self.canvas = canvas
-        self.x = x
-        self.y = y
+        super().__init__(x,y,m,p,velx,vely)
         self.size = size
         self.x1 = x+size
         self.y1 = y+size
-        self.m = m
-        self.p = p
-        self.velx = velx
-        self.vely = vely
-        self.accx = 0.0
-        self.accy = 9.8
-        self.p = p
         self.id = phyObCount
         phyObCount+=1
-        self.cr = canvas.create_rectangle(self.x,self.y,self.x1,self.y1, fill= rectColor, activefill = activeRectColor)
+        self.cr = canvas.create_rectangle(x,y,self.x1,self.y1, fill= rectColor, activefill = activeRectColor)
 
     def updateDisplay(self):
-        self.canvas.coords(self.cr,self.x,self.y, self.x+self.size, self.y+self.size)
+        self.canvas.coords(self.cr,self.pos.x,self.pos.y, self.pos.x+self.size, self.pos.y+self.size)
 
 root = Tk()
 root.title("Canvas Testing")
@@ -121,12 +165,18 @@ rectColor = "#B36090"
 activeRectColor = "#C9A4B5"
 
 poText = StringVar()
-poText.set("")
+poText.set("initialPO")
+poLabel = Label(mainframe, textvariable = poText)
+poLabel.place(x = 2, y = canv.winfo_height() - 10, anchor=SW)
+poIndex = 0
 
 def showPO(e):
-    poLabel = Label(mainframe, textvariable = poText)
-    poLabel.place(x = 2, y = canv.winfo_height() - 10, anchor=SW)
-    poText.set(str(poList[0]))
+    global poIndex
+    poIndex += 1
+    if poIndex > len(poList)-1:
+        poIndex = 0
+    #if poIndex == -1:
+    #    poIndex = len(poList)-1
 
 root.bind("s", showPO)
 
@@ -157,15 +207,18 @@ def physicsStep():
     timer = nt
 
 def updateRoot():
-    global firstPass
     global poList
     physicsStep()
+    #if showPOData:
+    poText.set(str(poList[poIndex]))
     root.update()
     root.update_idletasks()
-    if firstPass:
-        canvasCenter = [canv.winfo_width()/2, canv.winfo_height()/2]
-        poList.append(Box(canvasCenter[0]-15, canvasCenter[1]-15, 30, canv))
-        firstPass = False
+
+root.update()
+root.update_idletasks()
+canvasCenter = [canv.winfo_width()/2, canv.winfo_height()/2]
+poList.append(Box(canvasCenter[0]-15, canvasCenter[1]-15, 30, canv))
+poLabel.place(x = 2, y = canv.winfo_height() - 10, anchor=SW)
 
 while loopV:
     updateRoot()
