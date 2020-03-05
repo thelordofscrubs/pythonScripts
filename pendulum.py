@@ -3,8 +3,6 @@ from tkinter import ttk
 import math
 import time
 
-phyObCount = 0
-
 class clickEvent:
     def __init__(self, x, y, time):
         self.x = x
@@ -60,10 +58,13 @@ class Vector2:
         return Vector2(-self.x, -self.y)
     
     def __add__(self, nv):
-        return Vector2(self.x+nv.x,self.y+nv.y)
+        if type(nv) == int or type(nv) == float:
+            return Vector2(self.x+nv, self.y+nv)
+        else:
+            return Vector2(self.x+nv.x,self.y+nv.y)
     
     def __mul__(self, nv):
-        if type(nv) == int:
+        if type(nv) == int or type(nv) == float:
             return Vector2(self.x*nv, self.y*nv)
         else:
             return Vector2(self.x*nv.x,self.y*nv.y)
@@ -73,16 +74,16 @@ class Vector2:
 
 class PhysicsObject:
     maxVel = 300.0
+    phyObCount = 0
 
     def __init__(self, x = 10, y = 10, m = 1, p = False, velx = 0.0, vely = 0.0):
-        global phyObCount
         self.pos = Vector2(x,y)
         self.m = m
         self.vel = Vector2(velx,vely)
         self.acc = Vector2(0,9)
         self.p = p
-        self.id = phyObCount
-        phyObCount+=1
+        self.id = self.phyObCount
+        self.phyObCount+=1
 
     def applyVel(self, t):
         if self.p:
@@ -117,16 +118,31 @@ class PhysicsObject:
 
 class Box(PhysicsObject):
     def __init__(self, x, y, size, canvas, m = 1, p = False, velx = 0.0, vely = 0.0):
-        global phyObCount
         self.canvas = canvas
         super().__init__(x,y,m,p,velx,vely)
         self.size = size
         self.x1 = x+size
         self.y1 = y+size
         self.center = Vector2(x+(size/2),y+(size/2))
-        self.id = phyObCount
-        phyObCount+=1
         self.cr = canvas.create_rectangle(x,y,self.x1,self.y1, fill= rectColor, activefill = activeRectColor)
+
+    def applyVel(self, t):
+        if self.p:
+            return
+        self.pos += self.vel * Vector2(t,t)
+        self.center = self.pos+self.size/2
+        global looping
+        global canv
+        if looping:
+            if self.pos.x > canv.winfo_width():
+                self.pos.x -= canv.winfo_width()
+            if self.pos.x < 0:
+                self.pos.x += canv.winfo_width()
+            if self.pos.y > canv.winfo_height():
+                self.pos.y -= canv.winfo_height()
+            if self.pos.y < 0:
+                self.pos.y += canv.winfo_height()
+
 
     def updateDisplay(self):
         self.canvas.coords(self.cr,self.pos.x,self.pos.y, self.pos.x+self.size, self.pos.y+self.size)
@@ -138,10 +154,12 @@ class POConnector:
         self.c2 = o1.center
         self.o1 = o1
         self.canvas = canvas
-        self.v = c2-c1
+        self.v = self.c2-self.c1
         self.cr = canvas.create_line(self.c1.x,self.c1.y,self.c2.x,self.c2.y)
 
     def updateDisplay(self):
+        self.c1 = self.o.center
+        self.c2 = self.o1.center
         self.canvas.coords(self.cr,self.c1.x,self.c1.y,self.c2.x,self.c2.y)
 
 root = Tk()
@@ -192,6 +210,7 @@ poIndex = 0
 
 def showPO(e):
     global poIndex
+    global poList
     poIndex += 1
     if poIndex > len(poList)-1:
         poIndex = 0
@@ -206,6 +225,7 @@ root.bind("s", showPO)
 loopV = True
 
 def stopLoop(e):
+    global loopV
     loopV = False
     root.destroy()
 
@@ -213,17 +233,22 @@ root.bind("<Escape>", stopLoop)
 
 firstPass = True
 poList = []
+pocList = []
 timer = time.time()
 looping = True
 
 
 def physicsStep():
     global timer
+    global poList
+    global pocList
     nt = time.time()
     for po in poList:
         po.applyAcc(nt-timer)
         po.applyVel(nt-timer)
         po.updateDisplay()
+    for c in pocList:
+        c.updateDisplay()
     timer = nt
 
 def updateRoot():
@@ -238,7 +263,8 @@ root.update()
 root.update_idletasks()
 canvasCenter = [canv.winfo_width()/2, canv.winfo_height()/2]
 poList.append(Box(canvasCenter[0]-15, canvasCenter[1]-15, 30, canv))
-poList.append(Box(360,400,30,canv))
+poList.append(Box(360,230,30,canv))
+pocList.append(POConnector(poList[0],poList[1],canv))
 poLabel.place(x = 2, y = canv.winfo_height() - 10, anchor=SW)
 
 while loopV:
