@@ -1,0 +1,23 @@
+.mainGrid {
+    display: grid;
+    border: 2px solid black;
+    grid-template: "a b c d e"
+                   "f g h i j"
+                   "k l m n o";
+    grid-row-gap: 1px;
+    grid-column-gap: 1px;
+    background-color: black;
+    width:50%;
+    height:auto;
+    margin:auto;
+    margin-top: 100px;
+}
+
+.gridItem {
+    background-color: white;
+    text-align: center;
+    width:100%;
+    padding-top:20px;
+    padding-bottom: 20px;
+    font-size: x-large;
+}

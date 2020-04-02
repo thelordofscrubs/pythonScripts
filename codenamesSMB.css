@@ -1,0 +1,27 @@
+.mainGrid {
+display:grid;
+grid-template-columns: auto auto auto auto auto;
+background-color: black;
+}
+.gridWrapper{
+    margin:2px;
+    border: 2px solid black;
+}
+.context {
+    text-align: center;
+}
+.gridItem {
+text-align: center;
+margin:1px;
+background-color: white;
+font-size: large;
+padding-top: 10px;
+padding-bottom: 10px;
+}
+.mainContainer {
+    margin:auto;
+    padding:5px;
+    display:grid;
+    grid-template-columns: auto auto auto;
+    width:60%
+}
